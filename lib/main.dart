@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './userHomePage.dart';
+import './userSearchPage.dart';
 
 void main() => runApp(MyApp());
 
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
             color: Color.fromRGBO(0, 175, 128, 1),
           ),
           headline3: TextStyle(fontSize: 18.0,fontWeight: FontWeight.bold,color: Colors.black87),
+          headline4: TextStyle(fontSize: 15.0,fontWeight: FontWeight.bold,color: Colors.black87),
           bodyText1: TextStyle(
             fontSize: 14.0,
             color: Color.fromRGBO(128 , 127, 127, 1),
@@ -41,7 +43,7 @@ class MyApp extends StatelessWidget {
         ),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: UserHomePage(),
+      home: UserSearchPage(),
     );
   }
 }
