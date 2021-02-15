@@ -5,25 +5,10 @@ import (
 	"errors"
 	"regexp"
 
-	"github.com/delala/api/common"
-
 	"github.com/delala/api/entity"
-	"github.com/delala/api/password"
 	"github.com/delala/api/tools"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// Service is a type that defines password service
-type Service struct {
-	passwordRepo password.IPasswordRepository
-	commonRepo   common.ICommonRepository
-}
-
-// NewPasswordService is a function that returns a new password service
-func NewPasswordService(passwordRepository password.IPasswordRepository,
-	commonRepository common.ICommonRepository) password.IService {
-	return &Service{passwordRepo: passwordRepository, commonRepo: commonRepository}
-}
 
 // FindPassword is a method that find and return a user's password that matchs the identifier value
 func (service *Service) FindPassword(identifier string) (*entity.Password, error) {

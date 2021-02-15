@@ -4,7 +4,7 @@ import "github.com/delala/api/entity"
 
 // IService is an interface that defines all the service methods of a user struct
 type IService interface {
-	AddUser(newUser *entity.User) error
+	AddUser(newUser *entity.User, newPassword *entity.Password) error
 	ValidateUserProfile(user *entity.User) entity.ErrMap
 	FindUser(identifier string) (*entity.User, error)
 	AllUsers() []*entity.User

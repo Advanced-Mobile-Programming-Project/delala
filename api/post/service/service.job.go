@@ -45,23 +45,8 @@ func (service *Service) AddPost(newPost *entity.Post) error {
 func (service *Service) ValidatePost(post *entity.Post) entity.ErrMap {
 
 	errMap := make(map[string]error)
-	var isValidPostType bool
-	var isValidPostSector bool
-	var isValidEducationLevel bool
-	var isValidWorkExperience bool
-	var isValidContactType bool
-
-	// validPostTypes := service.cmService.GetValidPostTypesName()
-	// validPostSectors := service.cmService.GetValidPostSectorsName()
-	// validEducationLevels := service.cmService.GetValidEducationLevelsName()
-	// validWorkExperiences := service.cmService.GetValidWorkExperiences()
-	// validContactTypes := service.cmService.GetValidContactTypes()
-
-	validPostTypes := []string{}
-	validPostSectors := []string{}
-	validEducationLevels := []string{}
-	validWorkExperiences := []string{}
-	validContactTypes := []string{}
+	var isValidPostCategory bool
+	validPostCategories := service.cmService.GetValidPostCategoriesName()
 
 	emptyTitle, _ := regexp.MatchString(`^\s*$`, post.Title)
 	if emptyTitle {
@@ -77,37 +62,9 @@ func (service *Service) ValidatePost(post *entity.Post) entity.ErrMap {
 		errMap["description"] = errors.New("post description can not exceed 2000 characters")
 	}
 
-	for _, validPostType := range validPostTypes {
-		if strings.ToLower(strings.TrimSpace(post.Type)) == strings.ToLower(validPostType) {
-			isValidPostType = true
-			break
-		}
-	}
-
-	for _, validPostSector := range validPostSectors {
-		if strings.ToLower(strings.TrimSpace(post.Sector)) == strings.ToLower(validPostSector) {
-			isValidPostSector = true
-			break
-		}
-	}
-
-	for _, validEducationLevel := range validEducationLevels {
-		if strings.ToLower(strings.TrimSpace(post.EducationLevel)) == strings.ToLower(validEducationLevel) {
-			isValidEducationLevel = true
-			break
-		}
-	}
-
-	for _, validWorkExperience := range validWorkExperiences {
-		if strings.ToLower(strings.TrimSpace(post.Experience)) == strings.ToLower(validWorkExperience) {
-			isValidWorkExperience = true
-			break
-		}
-	}
-
-	for _, validContactType := range validContactTypes {
-		if strings.ToLower(strings.TrimSpace(post.ContactType)) == strings.ToLower(validContactType) {
-			isValidContactType = true
+	for _, validPostCategory := range validPostCategories {
+		if strings.ToLower(strings.TrimSpace(post.Category)) == strings.ToLower(validPostCategory) {
+			isValidPostCategory = true
 			break
 		}
 	}
@@ -115,47 +72,16 @@ func (service *Service) ValidatePost(post *entity.Post) entity.ErrMap {
 	if post.UserID != "" {
 		user, err := service.userRepo.Find(post.UserID)
 		if err != nil {
-			errMap["employer_id"] = errors.New("no user found for the provided employer id")
-		} else if user.Category != entity.UserCategoryViewer {
-			errMap["employer_id"] = errors.New("can not perform operation for non agent user")
+			errMap["user_id"] = errors.New("no user found for the provided user id")
+		} else if user.Category != entity.UserCategoryDelala {
+			errMap["user_id"] = errors.New("can not perform operation for non delala user")
 		}
 	} else {
-		errMap["employer_id"] = errors.New("no user found for the provided employer id")
+		errMap["user_id"] = errors.New("no user found for the provided user id")
 	}
 
-	if !isValidPostType {
-		errMap["type"] = errors.New("invalid post type used")
-	}
-
-	if !isValidPostSector {
-		errMap["sector"] = errors.New("invalid post sector used")
-	}
-
-	if !isValidEducationLevel {
-		errMap["education_level"] = errors.New("invalid education level used")
-	}
-
-	if !isValidWorkExperience {
-		errMap["experience"] = errors.New("invalid work experience used")
-	}
-
-	if !isValidContactType {
-		errMap["contact_type"] = errors.New("invalid contact type selected")
-	}
-
-	switch strings.ToLower(post.Gender) {
-
-	case "m", "f", "b", "male", "female", "both":
-		if strings.ToLower(post.Gender) == "m" || strings.ToLower(post.Gender) == "male" {
-			post.Gender = "M"
-		} else if strings.ToLower(post.Gender) == "f" || strings.ToLower(post.Gender) == "female" {
-			post.Gender = "F"
-		} else if strings.ToLower(post.Gender) == "b" || strings.ToLower(post.Gender) == "both" {
-			post.Gender = "B"
-		}
-
-	default:
-		errMap["gender"] = errors.New("invalid gender selection")
+	if !isValidPostCategory {
+		errMap["category"] = errors.New("invalid post category used")
 	}
 
 	if len(errMap) > 0 {
@@ -228,7 +154,7 @@ func (service *Service) SearchPosts(key, status string, pageNum int64, extra ...
 
 	defaultSearchColumnsRegx := []string{"title"}
 	defaultSearchColumnsRegx = append(defaultSearchColumnsRegx, extra...)
-	defaultSearchColumns := []string{"id", "employer_id", "type"}
+	defaultSearchColumns := []string{"id", "user_id", "category"}
 
 	result1 := make([]*entity.Post, 0)
 	result2 := make([]*entity.Post, 0)

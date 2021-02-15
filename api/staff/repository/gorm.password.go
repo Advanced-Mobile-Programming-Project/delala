@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/delala/api/entity"
-	"github.com/delala/api/password"
+	"github.com/delala/api/staff"
 	"github.com/jinzhu/gorm"
 )
 
@@ -12,7 +12,7 @@ type PasswordRepository struct {
 }
 
 // NewPasswordRepository is a function that returns a new password repository
-func NewPasswordRepository(connection *gorm.DB) password.IPasswordRepository {
+func NewPasswordRepository(connection *gorm.DB) staff.IPasswordRepository {
 	return &PasswordRepository{conn: connection}
 }
 

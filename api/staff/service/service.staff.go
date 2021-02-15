@@ -9,24 +9,22 @@ import (
 	"strings"
 
 	"github.com/delala/api/common"
-	"github.com/delala/api/tools"
-
 	"github.com/delala/api/entity"
-	"github.com/delala/api/password"
 	"github.com/delala/api/staff"
+	"github.com/delala/api/tools"
 )
 
 // Service is a type that defines staff service
 type Service struct {
 	staffRepo    staff.IStaffRepository
-	passwordRepo password.IPasswordRepository
+	passwordRepo staff.IPasswordRepository
 	commonRepo   common.ICommonRepository
 	sessionRepo  staff.ISessionRepository
 }
 
 // NewStaffService is a function that returns a new staff service
 func NewStaffService(staffRepository staff.IStaffRepository,
-	passwordRepository password.IPasswordRepository, sessionRepository staff.ISessionRepository,
+	passwordRepository staff.IPasswordRepository, sessionRepository staff.ISessionRepository,
 	commonRepository common.ICommonRepository) staff.IService {
 	return &Service{staffRepo: staffRepository, passwordRepo: passwordRepository,
 		commonRepo: commonRepository, sessionRepo: sessionRepository}

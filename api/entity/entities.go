@@ -5,6 +5,16 @@ import (
 	"time"
 )
 
+// User is a type that defines the user group
+type User struct {
+	ID          string `gorm:"primary_key; unique; not null"`
+	UserName    string
+	PhoneNumber string `gorm:"unique; not null"`
+	Category    string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 // Staff is a type that defines a staff member
 type Staff struct {
 	ID          string `gorm:"primary_key; unique; not null"`
@@ -27,31 +37,23 @@ type Password struct {
 	UpdatedAt time.Time
 }
 
-// User is a type that defines the user group
-type User struct {
+// Post is a type that defines post to be viewed
+type Post struct {
 	ID          string `gorm:"primary_key; unique; not null"`
-	UserName    string
-	PhoneNumber string `gorm:"unique; not null"`
+	UserID      string
+	Title       string
+	Description string `gorm:"type:text;"`
 	Category    string
+	Status      string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
 
-// Post is a type that defines post to be viewed
-type Post struct {
-	ID             string `gorm:"primary_key; unique; not null"`
-	UserID         string
-	Title          string
-	Description    string `gorm:"type:text;"`
-	Type           string
-	Sector         string
-	EducationLevel string
-	Experience     string
-	Gender         string
-	ContactType    string
-	Status         string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+// Attachment is a type that defines an attachment to a post
+type Attachment struct {
+	ID     string `gorm:"primary_key; unique; not null"`
+	PostID string `gorm:"not null"`
+	Asset  string
 }
 
 // Feedback is a type that defines user feedback
@@ -61,6 +63,12 @@ type Feedback struct {
 	Comment   string `gorm:"type:text;"`
 	Seen      bool
 	CreatedAt time.Time
+}
+
+// PostAttribute is a type that defines a post attribute like post category
+type PostAttribute struct {
+	ID   string `gorm:"primary_key; unique; not null"`
+	Name string
 }
 
 // Key is a type that defines a key type that can be used a key value in context

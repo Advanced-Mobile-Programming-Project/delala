@@ -16,22 +16,36 @@ import (
 
 // Service is a type that defines a user service
 type Service struct {
-	userRepo   user.IUserRepository
-	postRepo   post.IPostRepository
-	commonRepo common.ICommonRepository
+	userRepo      user.IUserRepository
+	passwordRepo  user.IPasswordRepository
+	apiClientRepo user.IAPIClientRepository
+	apiTokenRepo  user.IAPITokenRepository
+	postRepo      post.IPostRepository
+	commonRepo    common.ICommonRepository
 }
 
 // NewUserService is a function that returns a new user service
-func NewUserService(userRepository user.IUserRepository, postRepository post.IPostRepository,
+func NewUserService(userRepository user.IUserRepository,
+	passwordRepository user.IPasswordRepository, apiClientRepository user.IAPIClientRepository,
+	apiTokenRepository user.IAPITokenRepository, postRepository post.IPostRepository,
 	commonRepository common.ICommonRepository) user.IService {
-	return &Service{userRepo: userRepository,
+	return &Service{userRepo: userRepository, passwordRepo: passwordRepository,
+		apiClientRepo: apiClientRepository, apiTokenRepo: apiTokenRepository,
 		postRepo: postRepository, commonRepo: commonRepository}
 }
 
 // AddUser is a method that adds a new user to the system
-func (service *Service) AddUser(newUser *entity.User) error {
+func (service *Service) AddUser(newUser *entity.User, newPassword *entity.Password) error {
 	err := service.userRepo.Create(newUser)
 	if err != nil {
+		return errors.New("unable to add new user")
+	}
+
+	newPassword.ID = newUser.ID
+	err = service.passwordRepo.Create(newPassword)
+	if err != nil {
+		// Cleaning up if password is not add to the database
+		service.userRepo.Delete(newUser.ID)
 		return errors.New("unable to add new user")
 	}
 
@@ -82,11 +96,10 @@ func (service *Service) ValidateUserProfile(user *entity.User) entity.ErrMap {
 		user.PhoneNumber = phoneNumber
 	}
 
-	// if user.Category != entity.UserCategoryAseri &&
-	// 	user.Category != entity.UserCategoryAgent &&
-	// 	user.Category != entity.UserCategoryJobSeeker {
-	// 	errMap["category"] = errors.New("invalid category selected")
-	// }
+	if user.Category != entity.UserCategoryDelala &&
+		user.Category != entity.UserCategoryViewer {
+		errMap["category"] = errors.New("invalid category selected")
+	}
 
 	// Meaning a new user is being add
 	if user.ID == "" {
@@ -243,18 +256,22 @@ func (service *Service) UpdateUserSingleValue(userID, columnName string, columnV
 // DeleteUser is a method that deletes a user from the system
 func (service *Service) DeleteUser(userID string) (*entity.User, error) {
 
-	// Closing opened jobs of a user
-	// jobs := service.postRepo.FindMultiple(userID)
-	// for _, job := range jobs {
-	// if job.Status == entity.JobStatusOpened {
-	// 	service.postRepo.UpdateValue(job, "status", entity.JobStatusClosed)
-	// }
-	// }
-
 	user, err := service.userRepo.Delete(userID)
 	if err != nil {
 		return nil, errors.New("unable to delete user")
 	}
+
+	// Closing all the user's post
+	jobs := service.postRepo.FindMultiple(userID)
+	for _, job := range jobs {
+		if job.Status == entity.PostStatusOpened {
+			service.postRepo.UpdateValue(job, "status", entity.PostStatusClosed)
+		}
+	}
+
+	// Deleting user's password since passwords table contains
+	// both staff and user we have to explicitly delete the user's password
+	service.DeletePassword(userID)
 
 	return user, nil
 }

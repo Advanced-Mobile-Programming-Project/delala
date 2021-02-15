@@ -3,6 +3,7 @@ package tools
 import (
 	"fmt"
 	"math/rand"
+	"regexp"
 	"time"
 )
 
@@ -35,4 +36,26 @@ func GenerateOTP() string {
 	rand.Seed(time.Now().UnixNano())
 	nBig := rand.Int63n(8999)
 	return fmt.Sprintf("%d", nBig+1000)
+}
+
+// IDWOutPrefix is a function that returns an id without it's prefix
+func IDWOutPrefix(id string) string {
+
+	var output string
+	prefixes := []string{`UR_API-`, `UR_Token-`, `UR_LA-`, `ST-`, `UR-`}
+
+	for _, prefix := range prefixes {
+
+		match, _ := regexp.MatchString(`^`+prefix, regexp.QuoteMeta(id))
+		if match {
+
+			rx := regexp.MustCompile(prefix)
+			output = rx.ReplaceAllString(id, "")
+
+			break
+		}
+
+	}
+
+	return output
 }

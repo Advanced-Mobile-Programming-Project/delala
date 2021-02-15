@@ -15,6 +15,18 @@ const RoleAdmin = "Admin"
 // RoleAny is a constant that defines role to be any type
 const RoleAny = "Any"
 
+// APIClientTypeInternal is a constant for internal type api client
+const APIClientTypeInternal = "Internal"
+
+// APIClientTypeExternal is a constant for external or third party client
+const APIClientTypeExternal = "Third Party"
+
+// APIClientTypeUnfiltered is a constant for unfiltered client
+const APIClientTypeUnfiltered = "Unfiltered"
+
+// APIClientAppNameInternal is a constant for the app name of an internal type api client
+const APIClientAppNameInternal = "Delala"
+
 // UserCategoryViewer is a constant that holds the viewer user category
 const UserCategoryViewer = "Viewer"
 
