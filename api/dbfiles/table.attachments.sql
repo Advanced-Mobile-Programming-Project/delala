@@ -1,0 +1,5 @@
+CREATE TABLE attachments (
+    id VARCHAR(255) PRIMARY KEY UNIQUE NOT NULL,
+    post_id VARCHAR(255) NOT NULL,
+    asset VARCHAR(255)
+);

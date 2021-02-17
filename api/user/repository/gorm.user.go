@@ -26,11 +26,11 @@ func NewUserRepository(connection *gorm.DB) user.IUserRepository {
 // Create is a method that adds a new user to the database
 func (repo *UserRepository) Create(newUser *entity.User) error {
 	totalNumOfMembers := tools.CountMembers("users", repo.conn)
-	newUser.ID = fmt.Sprintf("UR-%s%d", tools.RandomStringGN(7), totalNumOfMembers+1)
+	newUser.ID = fmt.Sprintf("UR-%s%d", tools.GenerateRandomString(7), totalNumOfMembers+1)
 
 	for !tools.IsUnique("id", newUser.ID, "users", repo.conn) {
 		totalNumOfMembers++
-		newUser.ID = fmt.Sprintf("UR-%s%d", tools.RandomStringGN(7), totalNumOfMembers+1)
+		newUser.ID = fmt.Sprintf("UR-%s%d", tools.GenerateRandomString(7), totalNumOfMembers+1)
 	}
 
 	err := repo.conn.Create(newUser).Error
@@ -61,27 +61,27 @@ func (repo *UserRepository) Find(identifier string) (*entity.User, error) {
 	return user, nil
 }
 
-// FindAll is a method that returns set of users limited to the page number and category
-func (repo *UserRepository) FindAll(category string, pageNum int64) ([]*entity.User, int64) {
+// FindAll is a method that returns set of users limited to the page number and role
+func (repo *UserRepository) FindAll(role string, pageNum int64) ([]*entity.User, int64) {
 
 	var users []*entity.User
 	var count float64
 
-	if category == entity.UserCategoryAny {
-		repo.conn.Raw("SELECT * FROM users ORDER BY user_name ASC LIMIT ?, 20", pageNum*20).Scan(&users)
+	if role == entity.UserCategoryAny {
+		repo.conn.Raw("SELECT * FROM users ORDER BY first_name ASC LIMIT ?, 20", pageNum*20).Scan(&users)
 		repo.conn.Raw("SELECT COUNT(*) FROM users").Count(&count)
 
 	} else {
-		repo.conn.Raw("SELECT * FROM users WHERE category = ? ORDER BY user_name ASC LIMIT ?, 20", category, pageNum*20).Scan(&users)
-		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE category = ?", category).Count(&count)
+		repo.conn.Raw("SELECT * FROM users WHERE role = ? ORDER BY first_name ASC LIMIT ?, 20", role, pageNum*20).Scan(&users)
+		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE role = ?", role).Count(&count)
 	}
 
 	var pageCount int64 = int64(math.Ceil(count / 20.0))
 	return users, pageCount
 }
 
-// SearchWRegx is a method that searchs and returns set of users limited to the key identifier, page number and category using regular expersions
-func (repo *UserRepository) SearchWRegx(key, category string, pageNum int64, columns ...string) ([]*entity.User, int64) {
+// SearchWRegx is a method that searchs and returns set of users limited to the key identifier, page number and role using regular expersions
+func (repo *UserRepository) SearchWRegx(key, role string, pageNum int64, columns ...string) ([]*entity.User, int64) {
 	var users []*entity.User
 	var whereStmt []string
 	var sqlValues []interface{}
@@ -92,21 +92,21 @@ func (repo *UserRepository) SearchWRegx(key, category string, pageNum int64, col
 		sqlValues = append(sqlValues, "^"+regexp.QuoteMeta(key))
 	}
 
-	if category == entity.UserCategoryAny {
+	if role == entity.UserCategoryAny {
 
 		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE ("+strings.Join(whereStmt, "||")+") ", sqlValues...).Count(&count)
 
 		sqlValues = append(sqlValues, pageNum*20)
-		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") ORDER BY user_name ASC LIMIT ?, 20",
+		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") ORDER BY first_name ASC LIMIT ?, 20",
 			sqlValues...).Scan(&users)
 
 	} else {
 
-		sqlValues = append(sqlValues, category)
-		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE ("+strings.Join(whereStmt, "||")+") && category = ?", sqlValues...).Count(&count)
+		sqlValues = append(sqlValues, role)
+		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE ("+strings.Join(whereStmt, "||")+") && role = ?", sqlValues...).Count(&count)
 
 		sqlValues = append(sqlValues, pageNum*20)
-		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") && category = ? ORDER BY user_name ASC LIMIT ?, 20",
+		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") && role = ? ORDER BY first_name ASC LIMIT ?, 20",
 			sqlValues...).Scan(&users)
 	}
 
@@ -114,8 +114,8 @@ func (repo *UserRepository) SearchWRegx(key, category string, pageNum int64, col
 	return users, pageCount
 }
 
-// Search is a method that searchs and returns set of users limited to the key identifier, page number and category
-func (repo *UserRepository) Search(key, category string, pageNum int64, columns ...string) ([]*entity.User, int64) {
+// Search is a method that searchs and returns set of users limited to the key identifier, page number and role
+func (repo *UserRepository) Search(key, role string, pageNum int64, columns ...string) ([]*entity.User, int64) {
 	var users []*entity.User
 	var whereStmt []string
 	var sqlValues []interface{}
@@ -137,19 +137,19 @@ func (repo *UserRepository) Search(key, category string, pageNum int64, columns 
 		sqlValues = append(sqlValues, key)
 	}
 
-	if category == entity.UserCategoryAny {
+	if role == entity.UserCategoryAny {
 
 		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE ("+strings.Join(whereStmt, "||")+") ", sqlValues...).Count(&count)
 
 		sqlValues = append(sqlValues, pageNum*20)
-		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") ORDER BY user_name ASC LIMIT ?, 20", sqlValues...).Scan(&users)
+		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") ORDER BY first_name ASC LIMIT ?, 20", sqlValues...).Scan(&users)
 
 	} else {
-		sqlValues = append(sqlValues, category)
-		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE ("+strings.Join(whereStmt, "||")+") && category = ?", sqlValues...).Count(&count)
+		sqlValues = append(sqlValues, role)
+		repo.conn.Raw("SELECT COUNT(*) FROM users WHERE ("+strings.Join(whereStmt, "||")+") && role = ?", sqlValues...).Count(&count)
 
 		sqlValues = append(sqlValues, pageNum*20)
-		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") && category = ? ORDER BY user_name ASC LIMIT ?, 20", sqlValues...).Scan(&users)
+		repo.conn.Raw("SELECT * FROM users WHERE ("+strings.Join(whereStmt, "||")+") && role = ? ORDER BY first_name ASC LIMIT ?, 20", sqlValues...).Scan(&users)
 	}
 
 	var pageCount int64 = int64(math.Ceil(count / 20.0))
@@ -166,16 +166,16 @@ func (repo *UserRepository) All() []*entity.User {
 	return users
 }
 
-// Total is a method that retruns the total number of users for the given user category
-func (repo *UserRepository) Total(category string) int64 {
+// Total is a method that retruns the total number of users for the given user role
+func (repo *UserRepository) Total(role string) int64 {
 
 	var count int64
-	if category == entity.UserCategoryAny {
+	if role == entity.UserCategoryAny {
 		repo.conn.Raw("SELECT COUNT(*) FROM users").Count(&count)
 		return count
 	}
 
-	repo.conn.Raw("SELECT COUNT(*) FROM users WHERE category = ?", category).Count(&count)
+	repo.conn.Raw("SELECT COUNT(*) FROM users WHERE role = ?", role).Count(&count)
 	return count
 }
 

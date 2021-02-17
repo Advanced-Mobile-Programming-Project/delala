@@ -26,11 +26,11 @@ func NewStaffRepository(connection *gorm.DB) staff.IStaffRepository {
 // Create is a method that adds a new staff member to the database
 func (repo *StaffRepository) Create(newStaffMember *entity.Staff) error {
 	totalNumOfMember := tools.CountMembers("staffs", repo.conn)
-	newStaffMember.ID = fmt.Sprintf("ST-%s%d", tools.RandomStringGN(7), totalNumOfMember+1)
+	newStaffMember.ID = fmt.Sprintf("ST-%s%d", tools.GenerateRandomString(7), totalNumOfMember+1)
 
 	for !tools.IsUnique("id", newStaffMember.ID, "staffs", repo.conn) {
 		totalNumOfMember++
-		newStaffMember.ID = fmt.Sprintf("ST-%s%d", tools.RandomStringGN(7), totalNumOfMember+1)
+		newStaffMember.ID = fmt.Sprintf("ST-%s%d", tools.GenerateRandomString(7), totalNumOfMember+1)
 	}
 
 	err := repo.conn.Create(newStaffMember).Error

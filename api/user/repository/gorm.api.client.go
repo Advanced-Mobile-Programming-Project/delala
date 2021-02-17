@@ -24,10 +24,10 @@ func NewAPIClientRepository(connection *gorm.DB) user.IAPIClientRepository {
 // Create is a method that adds a new api client to the database
 func (repo *APIClientRepository) Create(newAPIClient *api.Client) error {
 
-	newAPIClient.APIKey = fmt.Sprintf("UR_API-%s%s", tools.IDWOutPrefix(newAPIClient.ClientUserID)+"_", tools.RandomStringGN(7))
+	newAPIClient.APIKey = fmt.Sprintf("UR_API-%s%s", tools.IDWOutPrefix(newAPIClient.ClientUserID)+"_", tools.GenerateRandomString(7))
 
 	for !repo.IsUnique("api_key", newAPIClient.APIKey) {
-		newAPIClient.APIKey = fmt.Sprintf("UR_API-%s%s", tools.IDWOutPrefix(newAPIClient.ClientUserID)+"_", tools.RandomStringGN(7))
+		newAPIClient.APIKey = fmt.Sprintf("UR_API-%s%s", tools.IDWOutPrefix(newAPIClient.ClientUserID)+"_", tools.GenerateRandomString(7))
 	}
 
 	err := repo.conn.Create(newAPIClient).Error

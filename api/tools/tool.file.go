@@ -38,9 +38,9 @@ func UploadSinglePhoto(identifier, prevFileName string,
 		suffix += string(fh.Filename[endPoint])
 	}
 
-	newFileName := fmt.Sprintf("asset_%s%s%s", identifier, RandomStringGN(3), suffix)
+	newFileName := fmt.Sprintf("asset_%s%s%s", identifier, GenerateRandomString(3), suffix)
 	for newFileName == prevFileName {
-		newFileName = fmt.Sprintf("asset_%s%s%s", identifier, RandomStringGN(3), suffix)
+		newFileName = fmt.Sprintf("asset_%s%s%s", identifier, GenerateRandomString(3), suffix)
 	}
 
 	path = filepath.Join(path, "../../assets/profilepics", newFileName)

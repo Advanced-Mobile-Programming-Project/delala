@@ -1,5 +1,5 @@
+import 'package:delala/models/errors.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/errors.dart';
 import 'package:recase/recase.dart';
 
 void showUnableToConnectError(BuildContext context) {
