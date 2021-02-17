@@ -41,7 +41,7 @@ func (service *Service) VerifyPassword(memberPassword *entity.Password, verifyPa
 		return errors.New("password does not match")
 	}
 
-	memberPassword.Salt = tools.RandomStringGN(30)
+	memberPassword.Salt = tools.GenerateRandomString(30)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(memberPassword.Password+memberPassword.Salt), 12)
 	memberPassword.Password = base64.StdEncoding.EncodeToString(hashedPassword)
 

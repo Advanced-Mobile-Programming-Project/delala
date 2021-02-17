@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/delala/api/common"
 	"github.com/delala/api/entity"
 	"github.com/delala/api/post"
 	"github.com/delala/api/user"
@@ -13,15 +12,14 @@ import (
 
 // Service is a type that defines a post service
 type Service struct {
-	postRepo  post.IPostRepository
-	userRepo  user.IUserRepository
-	cmService common.IService
+	postRepo post.IPostRepository
+	attrRepo post.IPostAttributeRepository
 }
 
 // NewPostService is a function that returns a new post service
 func NewPostService(postRepository post.IPostRepository, userRepository user.IUserRepository,
-	commonService common.IService) post.IService {
-	return &Service{postRepo: postRepository, userRepo: userRepository, cmService: commonService}
+	postAttributeRepository post.IPostAttributeRepository) post.IService {
+	return &Service{postRepo: postRepository, attrRepo: postAttributeRepository}
 }
 
 // AddPost is a method that adds a new post to the system
@@ -46,7 +44,7 @@ func (service *Service) ValidatePost(post *entity.Post) entity.ErrMap {
 
 	errMap := make(map[string]error)
 	var isValidPostCategory bool
-	validPostCategories := service.cmService.GetValidPostCategoriesName()
+	validPostCategories := service.GetValidPostCategoriesName()
 
 	emptyTitle, _ := regexp.MatchString(`^\s*$`, post.Title)
 	if emptyTitle {
@@ -69,16 +67,16 @@ func (service *Service) ValidatePost(post *entity.Post) entity.ErrMap {
 		}
 	}
 
-	if post.UserID != "" {
-		user, err := service.userRepo.Find(post.UserID)
-		if err != nil {
-			errMap["user_id"] = errors.New("no user found for the provided user id")
-		} else if user.Category != entity.UserCategoryDelala {
-			errMap["user_id"] = errors.New("can not perform operation for non delala user")
-		}
-	} else {
-		errMap["user_id"] = errors.New("no user found for the provided user id")
-	}
+	// if post.UserID != "" {
+	// 	user, err := service.userRepo.Find(post.UserID)
+	// 	if err != nil {
+	// 		errMap["user_id"] = errors.New("no user found for the provided user id")
+	// 	} else if user.Category != entity.UserCategoryDelala {
+	// 		errMap["user_id"] = errors.New("can not perform operation for non delala user")
+	// 	}
+	// } else {
+	// 	errMap["user_id"] = errors.New("no user found for the provided user id")
+	// }
 
 	if !isValidPostCategory {
 		errMap["category"] = errors.New("invalid post category used")

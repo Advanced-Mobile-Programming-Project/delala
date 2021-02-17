@@ -14,4 +14,12 @@ type IService interface {
 	UpdateUser(user *entity.User) error
 	UpdateUserSingleValue(userID, columnName string, columnValue interface{}) error
 	DeleteUser(userID string) (*entity.User, error)
+
+	AddUserRole(newUserRole *entity.UserRole) error
+	ValidateUserRole(userRole *entity.UserRole) error
+	FindUserRole(identifier string) (*entity.UserRole, error)
+	FindUserRolePermission(identifier string) (*entity.UserRolePermission, error)
+	AllUserRoles() []*entity.UserRole
+	DeleteUserRole(identifier string) (*entity.UserRole, error)
+	DeleteUserRolePermission(identifier string) (*entity.UserRolePermission, error)
 }

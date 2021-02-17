@@ -25,11 +25,11 @@ func NewPostRepository(connection *gorm.DB) post.IPostRepository {
 // Create is a method that adds a new post to the database
 func (repo *PostRepository) Create(newPost *entity.Post) error {
 	totalNumOfMembers := tools.CountMembers("posts", repo.conn)
-	newPost.ID = fmt.Sprintf("PT-%s%d", tools.RandomStringGN(7), totalNumOfMembers+1)
+	newPost.ID = fmt.Sprintf("PT-%s%d", tools.GenerateRandomString(7), totalNumOfMembers+1)
 
 	for !tools.IsUnique("id", newPost.ID, "posts", repo.conn) {
 		totalNumOfMembers++
-		newPost.ID = fmt.Sprintf("PT-%s%d", tools.RandomStringGN(7), totalNumOfMembers+1)
+		newPost.ID = fmt.Sprintf("PT-%s%d", tools.GenerateRandomString(7), totalNumOfMembers+1)
 	}
 
 	err := repo.conn.Create(newPost).Error

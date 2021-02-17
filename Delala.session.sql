@@ -1,0 +1,2 @@
+-- Drop DATABASE delala;
+-- CREATE DATABASE delala;

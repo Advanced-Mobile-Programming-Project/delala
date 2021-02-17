@@ -27,12 +27,6 @@ const APIClientTypeUnfiltered = "Unfiltered"
 // APIClientAppNameInternal is a constant for the app name of an internal type api client
 const APIClientAppNameInternal = "Delala"
 
-// UserCategoryViewer is a constant that holds the viewer user category
-const UserCategoryViewer = "Viewer"
-
-// UserCategoryDelala is a constant that holds the delala user category
-const UserCategoryDelala = "delala"
-
 // UserCategoryAny is a constant that defines a user category to be of any type
 const UserCategoryAny = "Any"
 

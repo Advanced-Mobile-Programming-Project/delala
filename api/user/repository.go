@@ -22,6 +22,26 @@ type IUserRepository interface {
 	Delete(identifier string) (*entity.User, error)
 }
 
+// IUserRoleRepository is a interface that defines all the repository methods of user role
+type IUserRoleRepository interface {
+	Create(newUserRolePermission *entity.UserRolePermission) error
+	Find(identifier string) (*entity.UserRolePermission, error)
+	FindMultiple(identifier string) []*entity.UserRolePermission
+	All() []*entity.UserRolePermission
+	Update(userRolePermission *entity.UserRolePermission) error
+	Delete(identifier string) (*entity.UserRolePermission, error)
+	DeleteMultiple(identifier string) ([]*entity.UserRolePermission, error)
+}
+
+// IUserPermissionRepository is a interface that defines all the repository methods of user permission
+type IUserPermissionRepository interface {
+	Create(newPermission *entity.UserPermission) error
+	Find(identifier string) (*entity.UserPermission, error)
+	All() []*entity.UserPermission
+	Update(permission *entity.UserPermission) error
+	Delete(identifier string) (*entity.UserPermission, error)
+}
+
 // IPasswordRepository is an interface that defines all the repository methods of a user's password struct
 type IPasswordRepository interface {
 	Create(newOPPassword *entity.Password) error

@@ -14,7 +14,7 @@ import (
 func (service *Service) AddAPIClient(apiClient *api.Client, user *entity.User) error {
 
 	apiClient.ClientUserID = user.ID
-	apiClient.APISecret = tools.RandomStringGN(20)
+	apiClient.APISecret = tools.GenerateRandomString(20)
 
 	err := service.apiClientRepo.Create(apiClient)
 	if err != nil {

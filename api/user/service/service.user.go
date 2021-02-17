@@ -10,6 +10,7 @@ import (
 	"github.com/delala/api/common"
 	"github.com/delala/api/entity"
 	"github.com/delala/api/post"
+	"github.com/delala/api/tools"
 	"github.com/delala/api/user"
 	"github.com/nyaruka/phonenumbers"
 )
@@ -21,6 +22,7 @@ type Service struct {
 	apiClientRepo user.IAPIClientRepository
 	apiTokenRepo  user.IAPITokenRepository
 	postRepo      post.IPostRepository
+	roleRepo      user.IUserRoleRepository
 	commonRepo    common.ICommonRepository
 }
 
@@ -28,10 +30,10 @@ type Service struct {
 func NewUserService(userRepository user.IUserRepository,
 	passwordRepository user.IPasswordRepository, apiClientRepository user.IAPIClientRepository,
 	apiTokenRepository user.IAPITokenRepository, postRepository post.IPostRepository,
-	commonRepository common.ICommonRepository) user.IService {
+	roleRepository user.IUserRoleRepository, commonRepository common.ICommonRepository) user.IService {
 	return &Service{userRepo: userRepository, passwordRepo: passwordRepository,
 		apiClientRepo: apiClientRepository, apiTokenRepo: apiTokenRepository,
-		postRepo: postRepository, commonRepo: commonRepository}
+		postRepo: postRepository, roleRepo: roleRepository, commonRepo: commonRepository}
 }
 
 // AddUser is a method that adds a new user to the system
@@ -52,67 +54,73 @@ func (service *Service) AddUser(newUser *entity.User, newPassword *entity.Passwo
 	return nil
 }
 
-// ValidateUserProfile is a method that validates a user profile.
+// ValidateUserProfile is a method that validate a user profile.
 // It checks if the user has a valid entries or not and return map of errors if any.
 // Also it will add country code to the phone number value if not included: default country code +251
 func (service *Service) ValidateUserProfile(user *entity.User) entity.ErrMap {
 
 	errMap := make(map[string]error)
-	validUserName, _ := regexp.MatchString(`^\w[\w\s]*$`, user.UserName)
+	isValidFirstName, _ := regexp.MatchString(`^[a-zA-Z]\w*$`, user.FirstName)
+	isValidLastName, _ := regexp.MatchString(`^\w*$`, user.LastName)
+	isValidUserRole := service.ValidUserRole(user.Role)
 
-	var phoneNumber string
-	phoneNumber = user.PhoneNumber
+	countryCode := tools.GetCountryCode(user.PhoneNumber)
+	phoneNumber := tools.OnlyPhoneNumber(user.PhoneNumber)
 
 	// Checking for local phone number
 	isLocalPhoneNumber, _ := regexp.MatchString(`^0\d{9}$`, phoneNumber)
-
-	if isLocalPhoneNumber {
+	if isLocalPhoneNumber && (countryCode == "" || countryCode == "ET") {
 		phoneNumberSlice := strings.Split(phoneNumber, "")
 		if phoneNumberSlice[0] == "0" {
 			phoneNumberSlice = phoneNumberSlice[1:]
 			internationalPhoneNumber := "+251" + strings.Join(phoneNumberSlice, "")
 			phoneNumber = internationalPhoneNumber
+			countryCode = "ET"
 		}
 	}
 
 	parsedPhoneNumber, _ := phonenumbers.Parse(phoneNumber, "")
 	validPhoneNumber := phonenumbers.IsValidNumber(parsedPhoneNumber)
 
-	if !validUserName {
-		errMap["user_name"] = errors.New(`user name should have at least one character and ` +
-			`contain only alpha numeric value`)
-	} else if len(user.UserName) > 255 {
-		errMap["user_name"] = errors.New(`user name should not be longer than 255 characters`)
+	if !isValidFirstName {
+		errMap["first_name"] = errors.New("firstname should only contain alpha numerical values and have at least one character")
+	}
+	if !isValidLastName {
+		errMap["last_name"] = errors.New("lastname should only contain alpha numerical values")
 	}
 
 	if !validPhoneNumber {
 		errMap["phone_number"] = errors.New("invalid phonenumber used")
 	} else {
 		// If a valid phone number is provided, adjust the phone number to fit the database
-		// Stored in +251900010197 format
+		// Stored in +251900010197[ET] or +251900010197 format
 		phoneNumber = fmt.Sprintf("+%d%d", parsedPhoneNumber.GetCountryCode(),
 			parsedPhoneNumber.GetNationalNumber())
 
 		user.PhoneNumber = phoneNumber
+		if countryCode != "" {
+			user.PhoneNumber = fmt.Sprintf("%s[%s]", phoneNumber, countryCode)
+		}
 	}
 
-	if user.Category != entity.UserCategoryDelala &&
-		user.Category != entity.UserCategoryViewer {
-		errMap["category"] = errors.New("invalid category selected")
+	if !isValidUserRole {
+		errMap["role"] = errors.New("invalid role selected")
 	}
 
 	// Meaning a new user is being add
 	if user.ID == "" {
-		if validPhoneNumber && !service.commonRepo.IsUnique("phone_number", user.PhoneNumber, "users") {
+		phoneNumberPattern := `^` + tools.EscapeRegexpForDatabase(phoneNumber) + `(\\[[a-zA-Z]{2}])?$`
+		if validPhoneNumber && !service.commonRepo.IsUniqueRegx("phone_number", phoneNumberPattern, "users") {
 			errMap["phone_number"] = errors.New("phone number already exists")
 		}
 	} else {
 		// Meaning trying to update user
-		prevProfile, err := service.userRepo.Find(user.ID)
+		prevProfile, _ := service.userRepo.Find(user.ID)
 
-		// Checking for err isn't relevant but to make it robust check for nil pointer
-		if err == nil && validPhoneNumber && prevProfile.PhoneNumber != user.PhoneNumber {
-			if !service.commonRepo.IsUnique("phone_number", user.PhoneNumber, "users") {
+		if validPhoneNumber &&
+			tools.OnlyPhoneNumber(prevProfile.PhoneNumber) != tools.OnlyPhoneNumber(user.PhoneNumber) {
+			phoneNumberPattern := `^` + tools.EscapeRegexpForDatabase(phoneNumber) + `(\\[[a-zA-Z]{2}])?$`
+			if !service.commonRepo.IsUniqueRegx("phone_number", phoneNumberPattern, "users") {
 				errMap["phone_number"] = errors.New("phone number already exists")
 			}
 		}
@@ -146,25 +154,23 @@ func (service *Service) AllUsers() []*entity.User {
 }
 
 // AllUsersWithPagination is a method that returns all the users with pagination
-func (service *Service) AllUsersWithPagination(category string, pageNum int64) ([]*entity.User, int64) {
+func (service *Service) AllUsersWithPagination(role string, pageNum int64) ([]*entity.User, int64) {
 
-	// if category != entity.UserCategoryAseri && category != entity.UserCategoryAgent &&
-	// 	category != entity.UserCategoryJobSeeker {
-	// 	category = entity.UserCategoryAny
-	// }
+	if !service.ValidUserRole(role) {
+		role = entity.UserCategoryAny
+	}
 
-	return service.userRepo.FindAll(category, pageNum)
+	return service.userRepo.FindAll(role, pageNum)
 }
 
 // SearchUsers is a method that searchs and returns a set of users related to the key identifier
-func (service *Service) SearchUsers(key, category string, pageNum int64, extra ...string) ([]*entity.User, int64) {
+func (service *Service) SearchUsers(key, role string, pageNum int64, extra ...string) ([]*entity.User, int64) {
 
-	// if category != entity.UserCategoryAseri && category != entity.UserCategoryAgent &&
-	// 	category != entity.UserCategoryJobSeeker {
-	// 	category = entity.UserCategoryAny
-	// }
+	if !service.ValidUserRole(role) {
+		role = entity.UserCategoryAny
+	}
 
-	defaultSearchColumnsRegx := []string{"user_name"}
+	defaultSearchColumnsRegx := []string{"first_name"}
 	defaultSearchColumnsRegx = append(defaultSearchColumnsRegx, extra...)
 	defaultSearchColumns := []string{"id", "phone_number"}
 
@@ -181,9 +187,9 @@ func (service *Service) SearchUsers(key, category string, pageNum int64, extra .
 		return results, 0
 	}
 
-	result1, pageCount1 = service.userRepo.Search(key, category, pageNum, defaultSearchColumns...)
+	result1, pageCount1 = service.userRepo.Search(key, role, pageNum, defaultSearchColumns...)
 	if len(defaultSearchColumnsRegx) > 0 {
-		result2, pageCount2 = service.userRepo.SearchWRegx(key, category, pageNum, defaultSearchColumnsRegx...)
+		result2, pageCount2 = service.userRepo.SearchWRegx(key, role, pageNum, defaultSearchColumnsRegx...)
 	}
 
 	for _, user := range result1 {
@@ -206,15 +212,14 @@ func (service *Service) SearchUsers(key, category string, pageNum int64, extra .
 	return results, pageCount
 }
 
-// TotalUsers is a method that returns the total number of users for a given user category
-func (service *Service) TotalUsers(category string) int64 {
+// TotalUsers is a method that returns the total number of users for a given user role
+func (service *Service) TotalUsers(role string) int64 {
 
-	// if category != entity.UserCategoryAgent && category != entity.UserCategoryAseri &&
-	// 	category != entity.UserCategoryJobSeeker {
-	// 	category = entity.UserCategoryAny
-	// }
+	if !service.ValidUserRole(role) {
+		role = entity.UserCategoryAny
+	}
 
-	return service.userRepo.Total(category)
+	return service.userRepo.Total(role)
 }
 
 // FromToUsers is a method that returns the count of users starting from start date to the next 6 months
@@ -262,10 +267,10 @@ func (service *Service) DeleteUser(userID string) (*entity.User, error) {
 	}
 
 	// Closing all the user's post
-	jobs := service.postRepo.FindMultiple(userID)
-	for _, job := range jobs {
-		if job.Status == entity.PostStatusOpened {
-			service.postRepo.UpdateValue(job, "status", entity.PostStatusClosed)
+	posts := service.postRepo.FindMultiple(userID)
+	for _, post := range posts {
+		if post.Status == entity.PostStatusOpened {
+			service.postRepo.UpdateValue(post, "status", entity.PostStatusClosed)
 		}
 	}
 

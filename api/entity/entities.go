@@ -8,9 +8,11 @@ import (
 // User is a type that defines the user group
 type User struct {
 	ID          string `gorm:"primary_key; unique; not null"`
-	UserName    string
+	FirstName   string `gorm:"not null"`
+	LastName    string `gorm:"not null"`
 	PhoneNumber string `gorm:"unique; not null"`
-	Category    string
+	ProfilePic  string `gorm:"not null"`
+	Role        string `gorm:"not null"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -56,19 +58,29 @@ type Attachment struct {
 	Asset  string
 }
 
-// Feedback is a type that defines user feedback
-type Feedback struct {
-	ID        string `gorm:"primary_key; unique; not null"`
-	UserID    string
-	Comment   string `gorm:"type:text;"`
-	Seen      bool
-	CreatedAt time.Time
-}
-
 // PostAttribute is a type that defines a post attribute like post category
 type PostAttribute struct {
-	ID   string `gorm:"primary_key; unique; not null"`
+	ID   string
 	Name string
+}
+
+// UserRole is a type that defines a user role permission
+type UserRole struct {
+	Name        string
+	Permissions []*UserRolePermission
+}
+
+// UserRolePermission is a type that defines a user role permission
+type UserRolePermission struct {
+	ID           string `gorm:"primary_key; unique; not null"`
+	Name         string `gorm:"not null"`
+	PermissionID string
+}
+
+// UserPermission is a type that defines a user permissions( what a user can do )
+type UserPermission struct {
+	ID   string `gorm:"primary_key; unique; not null"`
+	Name string `gorm:"not null; unique"`
 }
 
 // Key is a type that defines a key type that can be used a key value in context
