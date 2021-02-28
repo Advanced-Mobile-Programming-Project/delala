@@ -81,7 +81,7 @@ func initServer() {
 		apiTokenRepo, postRepo, userRole, commonRepo)
 	postService := ptService.NewPostService(postRepo, userRepo, postAttributeRepo)
 
-	userAPIHandler = urAPIHandler.NewUserAPIHandler(userService, postService)
+	userAPIHandler = urAPIHandler.NewUserAPIHandler(userService, postService, redisClient)
 }
 
 // initDB initialize the database for takeoff

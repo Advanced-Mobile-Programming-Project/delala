@@ -6,22 +6,35 @@ part 'user.g.dart';
 @immutable
 class User extends Equatable {
   final String id;
-  final String userName;
+  final String firstName;
+  final String lastName;
   final String phoneNumber;
-  final String category;
+  final String profilePic;
+  final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  User(this.id, this.userName, this.phoneNumber, this.category, this.createdAt,
-      this.updatedAt);
-
-  factory User.forEvent({userName, phoneNumber, category}) {
-    return User(null, userName, phoneNumber, category, null, null);
-  }
+  User(
+      {this.id,
+      this.firstName,
+      this.lastName,
+      this.phoneNumber,
+      this.profilePic,
+      this.role,
+      this.createdAt,
+      this.updatedAt});
 
   @override
-  List<Object> get props =>
-      [id, userName, phoneNumber, category, createdAt, updatedAt];
+  List<Object> get props => [
+        id,
+        this.firstName,
+        this.lastName,
+        this.phoneNumber,
+        this.profilePic,
+        role,
+        createdAt,
+        updatedAt
+      ];
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
