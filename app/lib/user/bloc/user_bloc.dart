@@ -1,9 +1,7 @@
-import 'dart:io';
-
 import 'package:delala/user/bloc/bloc.dart';
 import 'package:delala/user/bloc/user_state.dart';
 import 'package:delala/user/repository/user_repository.dart';
-import 'package:http/http.dart';
+import 'package:delala/user/repository/user_repository_response.dart';
 
 class UserBloc extends Bloc<UserEvent, UserState> {
   final UserRepository userRepository;
@@ -14,6 +12,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   @override
   Stream<UserState> mapEventToState(UserEvent event) async* {
+    if (event is UserCreateFinishPause) {
+      yield UserCreatePause(event.user);
+    }
+
     if (event is UserView) {
       yield UserLoading();
       try {
@@ -24,9 +26,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       }
     }
 
-    if (event is UserCreate) {
+    if (event is UserCreateInit) {
       try {
-        Response response = await userRepository.createUser(event.user);
+        UserRepositoryResponse response =
+            await userRepository.initCreateUser(event.user);
         yield _handleResponse(response);
       } catch (e) {
         yield OperationFailure(e);
@@ -54,12 +57,13 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  UserState _handleResponse(Response response) {
+  UserState _handleResponse(UserRepositoryResponse response) {
     UserState state;
-    if (response.statusCode == HttpStatus.ok) {
-      state = UserLoadSuccess(response);
-    } else {
-      state = UserOperationFailure(response);
+
+    if (response is RUserCreateInitSuccess) {
+      state = UserCreateInitSuccess(response.user);
+    } else if (response is RUserCreateInitFailure) {
+      state = UserCreateInitFailure(response.errorMap);
     }
 
     return state;
