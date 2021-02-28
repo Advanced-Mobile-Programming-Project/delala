@@ -1,3 +1,6 @@
+import 'package:delala/user/screens/signup_base.dart';
+import 'package:flutter/material.dart';
+
 class AppRoutes {
   static String logInRoute = "/";
   static String singUpRoute = "/sign_up";
@@ -16,4 +19,14 @@ class AppRoutes {
   static String notification = "/notification";
   static String changePassword = "/change_password";
   static String sessionManagement = "/session_management";
+}
+
+class DelalaAppRoute {
+  static Route generateRoute(RouteSettings settings) {
+    if (settings.name == SignUp.routeName) {
+      return MaterialPageRoute(builder: (context) => SignUp());
+    }
+
+    return MaterialPageRoute(builder: (context) => SignUp());
+  }
 }
