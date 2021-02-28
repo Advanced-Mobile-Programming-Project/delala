@@ -1,3 +1,4 @@
+import 'package:delala/user/models/user.dart';
 import 'package:equatable/equatable.dart';
 import 'package:http/http.dart';
 
@@ -14,6 +15,24 @@ class UserLoadSuccess extends UserState {
   final Response response;
 
   UserLoadSuccess([this.response]);
+}
+
+class UserCreatePause extends UserState {
+  final User user;
+
+  UserCreatePause([this.user]);
+}
+
+class UserCreateInitSuccess extends UserState {
+  final User user;
+
+  UserCreateInitSuccess([this.user]);
+}
+
+class UserCreateInitFailure extends UserState {
+  final Map<String, String> errorMap;
+
+  UserCreateInitFailure([this.errorMap]);
 }
 
 class UserOperationFailure extends UserState {

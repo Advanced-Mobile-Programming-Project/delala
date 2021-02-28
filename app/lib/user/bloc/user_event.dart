@@ -12,16 +12,21 @@ class UserView extends UserEvent {
   List<Object> get props => [];
 }
 
-class UserCreate extends UserEvent {
+class UserCreateInit extends UserEvent {
   final User user;
 
-  const UserCreate(this.user);
+  const UserCreateInit(this.user);
 
   @override
   List<Object> get props => [user];
+}
+
+class UserCreateFinishPause extends UserEvent {
+  final User user;
+  const UserCreateFinishPause(this.user);
 
   @override
-  String toString() => 'User Created {user: $user}';
+  List<Object> get props => [user];
 }
 
 class UserUpdate extends UserEvent {
