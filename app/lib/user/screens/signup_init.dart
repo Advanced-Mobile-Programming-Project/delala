@@ -1,25 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:country_code_picker/country_code.dart';
-import 'package:country_code_picker/country_code_picker.dart';
-import 'package:delala/models/errors.dart';
-import 'package:delala/user/bloc/bloc.dart';
-import 'package:delala/user/bloc/user_bloc.dart';
-import 'package:delala/user/bloc/user_event.dart';
-import 'package:delala/user/bloc/user_state.dart';
-import 'package:delala/user/models/user.dart';
-import 'package:delala/utils/show.snackbar.dart';
-import 'package:delala/widgets/button/loading.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:http/http.dart' as http;
-import 'package:recase/recase.dart';
+import 'signup.dart';
 
 class SignUpInit extends StatefulWidget {
-  final bool visible;
   final StreamController<String> nonceController;
+  final bool visible;
 
   SignUpInit({this.visible, @required this.nonceController});
 
@@ -27,28 +10,33 @@ class SignUpInit extends StatefulWidget {
 }
 
 class _SignUpInit extends State<SignUpInit> {
-  FocusNode _userNameFocusNode;
+  FocusNode _firstNameFocusNode;
+  FocusNode _lastNameFocusNode;
   FocusNode _phoneFocusNode;
   FocusNode _buttonFocusNode;
 
-  TextEditingController _userNameController;
+  TextEditingController _firstNameController;
+  TextEditingController _lastNameController;
   TextEditingController _phoneController;
 
-  String _userNameErrorText;
+  String _firstNameErrorText;
+  String _lastNameErrorText;
   String _phoneNumberErrorText;
   String _phoneNumberHint = "*  *  *   *  *  *   *  *  *  *";
   String _areaCode = '+251';
   String _countryCode = "ET";
   bool _loading = false;
 
-  String _autoValidateUserName(String value) {
+  User user;
+
+  String _autoValidateFirstName(String value) {
     if (value.isEmpty) {
       return null;
     }
-    return _validateUserName(value);
+    return _validateFirstName(value);
   }
 
-  String _validateUserName(String value) {
+  String _validateFirstName(String value) {
     var exp1 = RegExp(r"^[a-zA-Z]\w*$");
     var exp2 = RegExp(r"^[a-zA-Z]");
 
@@ -58,6 +46,25 @@ class _SignUpInit extends State<SignUpInit> {
 
     if (!exp1.hasMatch(value)) {
       return ReCase("first name should only contain alpha numerical values")
+          .sentenceCase;
+    }
+
+    return null;
+  }
+
+  String _autoValidateLastName(String value) {
+    if (value.isEmpty) {
+      return null;
+    }
+
+    return _validateLastName(value);
+  }
+
+  String _validateLastName(String value) {
+    var exp = RegExp(r"^\w*$");
+
+    if (!exp.hasMatch(value)) {
+      return ReCase("last name should only contain alpha numerical values")
           .sentenceCase;
     }
 
@@ -96,99 +103,108 @@ class _SignUpInit extends State<SignUpInit> {
       return;
     }
 
-    var userName = _userNameController.text;
-    var phoneNumber = _phoneController.text;
-
-    var userNameError = _validateUserName(userName);
-    var phoneNumberError = await _validatePhoneNumber(phoneNumber);
-
-    if (userName.isEmpty) {
-      setState(() {
-        _userNameErrorText = ReCase(EmptyEntryError).sentenceCase;
-      });
-    } else if (userNameError != null) {
-      setState(() {
-        _userNameErrorText = userNameError;
-      });
-    }
-
-    if (phoneNumberError != null) {
-      setState(() {
-        _phoneNumberErrorText = phoneNumberError;
-      });
-    }
-
-    if (userNameError != null || phoneNumberError != null) {
-      return;
-    }
-
-    // Removing the final error at the start
-    setState(() {
-      _loading = true;
-      _userNameErrorText = null;
-      _phoneNumberErrorText = null;
-    });
-
-    phoneNumber = _withCountryCode(await _transformPhoneNumber(phoneNumber));
-    final UserEvent event = UserCreate(
-      User.forEvent(userName: userName, phoneNumber: phoneNumber),
-    );
+    // var firstName = _firstNameController.text;
+    // var lastName = _lastNameController.text;
+    // var phoneNumber = _phoneController.text;
+    //
+    // var firstNameError = _validateFirstName(firstName);
+    // var lastNameError = _validateLastName(lastName);
+    // var phoneNumberError = await _validatePhoneNumber(phoneNumber);
+    //
+    // if (firstName.isEmpty) {
+    //   setState(() {
+    //     _firstNameErrorText = ReCase(EmptyEntryError).sentenceCase;
+    //   });
+    // } else if (firstNameError != null) {
+    //   setState(() {
+    //     _firstNameErrorText = firstNameError;
+    //   });
+    // }
+    //
+    // if (lastNameError != null) {
+    //   setState(() {
+    //     _lastNameErrorText = lastNameError;
+    //   });
+    // }
+    //
+    // if (phoneNumberError != null) {
+    //   setState(() {
+    //     _phoneNumberErrorText = phoneNumberError;
+    //   });
+    // }
+    //
+    // if (firstNameError != null ||
+    //     lastNameError != null ||
+    //     phoneNumberError != null) {
+    //   return;
+    // }
+    //
+    // // Removing the final error at the start
+    // setState(() {
+    //   _loading = true;
+    //   _firstNameErrorText = null;
+    //   _phoneNumberErrorText = null;
+    // });
+    //
+    // phoneNumber = _withCountryCode(await _transformPhoneNumber(phoneNumber));
+    // final UserEvent event = UserCreateInit(
+    //   User(firstName: firstName, lastName: lastName, phoneNumber: phoneNumber),
+    // );
+    user = User(
+        firstName: "Benyam", lastName: "Simayehu", phoneNumber: "0900010197");
+    final UserEvent event = UserCreateInit(user);
 
     BlocProvider.of<UserBloc>(context).add(event);
-
-    // Stop loading after response received
-    setState(() {
-      _loading = false;
-    });
   }
 
-  void _onSuccess(http.Response response) {
+  void _onSuccess(User user) {
+    widget.nonceController.add("Test");
+    final UserEvent event = UserCreateFinishPause(user);
+    BlocProvider.of<UserBloc>(context).add(event);
+
     // Navigator.of(context).pushNamedAndRemoveUntil(
     //     CoursesList.routeName, (route) => false);
   }
 
-  void _onError(http.Response response) {
-    String error = "";
-    switch (response.statusCode) {
-      case HttpStatus.badRequest:
-        var jsonData = json.decode(response.body);
-        jsonData.forEach((key, value) {
-          error = jsonData[key];
-          switch (key) {
-            case "user_name":
-              _userNameErrorText = ReCase(error).sentenceCase;
-              break;
-            case "phone_number":
-              if (error == PhoneNumberAlreadyExistsErrorB) {
-                error = PhoneNumberAlreadyExistsError;
-              }
-              _phoneNumberErrorText = ReCase(error).sentenceCase;
-              break;
+  void _onError(Map<String, String> errMap) {
+    errMap.forEach((key, error) {
+      switch (key) {
+        case "first_name":
+          setState(() {
+            _firstNameErrorText = ReCase(error).sentenceCase;
+          });
+          break;
+        case "last_name":
+          setState(() {
+            _lastNameErrorText = ReCase(error).sentenceCase;
+          });
+          break;
+        case "phone_number":
+          if (error == PhoneNumberAlreadyExistsErrorB) {
+            error = PhoneNumberAlreadyExistsError;
           }
-        });
-        return;
-      case HttpStatus.internalServerError:
-        error = FailedOperationError;
-        break;
-      default:
-        error = SomethingWentWrongError;
-    }
-
-    showServerError(context, error);
+          _phoneNumberErrorText = ReCase(error).sentenceCase;
+          break;
+        case "error":
+          if (errMap[key] == FailedOperationError) {
+            showServerError(context, FailedOperationError);
+          } else if (errMap[key] == SomethingWentWrongError) {
+            showServerError(context, SomethingWentWrongError);
+          }
+          return;
+      }
+    });
   }
 
   void _handleBlocResponse(UserState state) {
-    if (state is UserLoadSuccess) {
-      _onSuccess(state.response);
-    } else if (state is OperationFailure) {
-      if (state.e is SocketException) {
-        showUnableToConnectError(context);
-      } else {
-        showServerError(context, SomethingWentWrongError);
-      }
-    } else if (state is UserOperationFailure) {
-      _onError(state.response);
+    if (state is UserCreateInitSuccess) {
+      _onSuccess(state.user);
+    } else if (state is UserCreateInitFailure) {
+      _onError(state.errorMap);
     }
+
+    // // Stop loading after response received
+    _loading = false;
   }
 
   String _withCountryCode(String phoneNumber) {
@@ -229,11 +245,13 @@ class _SignUpInit extends State<SignUpInit> {
 
     FlutterLibphonenumber().init();
 
-    _userNameFocusNode = FocusNode();
+    _firstNameFocusNode = FocusNode();
+    _lastNameFocusNode = FocusNode();
     _phoneFocusNode = FocusNode();
     _buttonFocusNode = FocusNode();
 
-    _userNameController = TextEditingController();
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
     _phoneController = TextEditingController();
 
     _phoneFocusNode.addListener(() {
@@ -261,36 +279,61 @@ class _SignUpInit extends State<SignUpInit> {
 
   @override
   void dispose() {
-    _userNameController.dispose();
+    _firstNameController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserBloc, UserState>(
-      builder: (context, state) {
-        _handleBlocResponse(state);
-        return Visibility(
-          visible: widget.visible ?? false,
-          child: Column(
+    return Visibility(
+      visible: widget.visible ?? false,
+      child: BlocBuilder<UserBloc, UserState>(
+        builder: (context, state) {
+          // Bloc response handler
+          _handleBlocResponse(state);
+
+          return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: TextFormField(
-                  controller: _userNameController,
-                  focusNode: _userNameFocusNode,
+                  controller: _firstNameController,
+                  focusNode: _firstNameFocusNode,
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     isDense: true,
                     floatingLabelBehavior: FloatingLabelBehavior.always,
                     labelText: "First Name",
-                    errorText: _userNameErrorText,
+                    errorText: _firstNameErrorText,
                   ),
                   autovalidateMode: AutovalidateMode.always,
-                  validator: _autoValidateUserName,
+                  validator: _autoValidateFirstName,
                   onChanged: (_) => this.setState(() {
-                    _userNameErrorText = null;
+                    _firstNameErrorText = null;
+                  }),
+                  textCapitalization: TextCapitalization.sentences,
+                  onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                  textInputAction: TextInputAction.next,
+                  keyboardType: TextInputType.name,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 25),
+                child: TextFormField(
+                  controller: _lastNameController,
+                  focusNode: _lastNameFocusNode,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: "Last Name",
+                    errorText: _lastNameErrorText,
+                    isDense: true,
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                  ),
+                  autovalidateMode: AutovalidateMode.always,
+                  validator: _autoValidateLastName,
+                  onChanged: (_) => this.setState(() {
+                    _lastNameErrorText = null;
                   }),
                   textCapitalization: TextCapitalization.sentences,
                   onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
@@ -391,9 +434,9 @@ class _SignUpInit extends State<SignUpInit> {
                 ],
               )
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
