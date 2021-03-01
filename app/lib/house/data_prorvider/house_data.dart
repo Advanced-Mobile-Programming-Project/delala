@@ -28,8 +28,7 @@ class HouseDataProvider {
         'status': house.status,
       }),
     );
-
-    print(response.body);
+    print(House.fromJson(jsonDecode(response.body)));
     if (response.statusCode == 201) {
       return House.fromJson(jsonDecode(response.body));
     } else {
@@ -49,12 +48,13 @@ class HouseDataProvider {
 
   Future<void> deleteHouse(String id) async {
     final response = await httpClient.delete(
-      '$_baseUrl/api/job/$id',
+      '$_baseUrl/api/house/$id',
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
     );
-
+    print(response.body);
+    print(response.statusCode);
     if (response.statusCode != 204) {
       throw Exception('Failed to delete house.');
     }
@@ -62,6 +62,7 @@ class HouseDataProvider {
 
   Future<void> updateHouse(House house) async {
     var id = house.id;
+    print(id);
     final response = await httpClient.put('$_baseUrl/api/house/$id',
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
@@ -78,6 +79,8 @@ class HouseDataProvider {
           'category': house.category,
           'status': house.status,
         }));
+    print(response.body);
+    print(response.statusCode);
     if (response.statusCode != 204) {
       throw Exception('Failed to update house.');
     }

@@ -22,7 +22,7 @@ class House extends Equatable {
   final String description;
   final int bedrooms;
   final int bathrooms;
-  final dynamic cost;
+  final String cost;
   final String street;
   final String city;
   final String location;

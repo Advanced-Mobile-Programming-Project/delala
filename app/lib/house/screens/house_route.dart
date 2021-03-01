@@ -13,7 +13,7 @@ class DelalaAppRoute {
       return MaterialPageRoute(
           builder: (context) => AddUpdateHouse(
             args: args,
-          ));
+          ),);
     }
 
 

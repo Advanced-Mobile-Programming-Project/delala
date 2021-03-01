@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -59,6 +60,7 @@ class HouseList extends StatelessWidget {
         )
       ], borderRadius: BorderRadius.circular(10.0), color: Colors.white),
       child: TextField(
+        cursorColor: Theme.of(context).accentColor,
         decoration: InputDecoration(
             suffixIcon: Icon(
               Icons.search,
@@ -444,8 +446,8 @@ class HouseList extends StatelessWidget {
 //        physics: ScrollPhysics(),
         itemCount: houses.length,
         itemBuilder: (_, idx) => GestureDetector(
-          onTap: () => Navigator.of(context)
-              .pushNamed(HouseDetail.routeName, arguments: houses[idx]),
+          onTap: () => Navigator.pushNamed(context, HouseDetail.routeName,
+              arguments: houses[idx]),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 20),
             margin: EdgeInsets.only(bottom: 20, top: 20),
@@ -524,7 +526,7 @@ class HouseList extends StatelessWidget {
                               padding: EdgeInsets.only(top: 5),
                               child: Flexible(
                                   child: Text(
-                                '${houses[idx].street},${houses[idx].city},${houses[idx].location}',
+                                '${houses[idx].street}, ${houses[idx].city}, ${houses[idx].location}',
                                 style: Theme.of(context).textTheme.bodyText1,
                               )))
                         ],
@@ -601,7 +603,20 @@ class HouseList extends StatelessWidget {
       body: BlocBuilder<HouseBloc, HouseState>(
         builder: (_, state) {
           if (state is HouseOperationFailure) {
-            return Text('Could not do House operation');
+            return Container(
+              width: double.infinity,
+                child:Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'images/not_found.svg',
+                      height: 200,
+                    ),
+                    Text('Could not do House operation')
+                  ],
+                )
+            );
           }
 
           if (state is HousesLoadSuccess) {
@@ -622,13 +637,7 @@ class HouseList extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).pushNamed(
-          AddUpdateHouse.routeName,
-          arguments: HouseArgument(edit: false),
-        ),
-        child: Icon(Icons.add),
-      ),
+
     );
   }
 }

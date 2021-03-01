@@ -7,6 +7,7 @@ class HouseRepository{
   HouseRepository({@required this.dataProvider}):assert(dataProvider != null);
 
   Future<House> createHouse(House house) async {
+    print(await dataProvider.createHouse(house));
     return await dataProvider.createHouse(house);
   }
 

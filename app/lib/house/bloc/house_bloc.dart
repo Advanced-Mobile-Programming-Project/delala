@@ -18,8 +18,7 @@ class HouseBloc extends Bloc<HouseEvent, HouseState> {
       try {
         final houses = await houseRepository.getHouses();
         yield HousesLoadSuccess(houses);
-      } catch (err) {
-        print(err);
+      } catch (_) {
         yield HouseOperationFailure();
       }
     }
@@ -29,7 +28,8 @@ class HouseBloc extends Bloc<HouseEvent, HouseState> {
         await houseRepository.createHouse(event.house);
         final houses = await houseRepository.getHouses();
         yield HousesLoadSuccess(houses);
-      } catch (_) {
+      } catch (err) {
+        print(err);
         yield HouseOperationFailure();
       }
     }
